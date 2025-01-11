@@ -12,6 +12,7 @@ void initializeTokenList(struct TokenList* list , size_t capacity){
   list->size = 0;
   list->capacity = capacity;
 }
+
 void addToken(struct TokenList* list, struct Token* token){
   if (list->capacity == list->size){
     size_t newCap = list->capacity * 2;
@@ -25,26 +26,11 @@ void addToken(struct TokenList* list, struct Token* token){
   }
   list->tokens[list->size++] = *token;
 }
+
 void freeTokenList(struct TokenList* list){
   free(list->tokens);
   free(list);
 }
-
-struct CountResult countConsecutiveChars(FILE* file, char ch){
-  struct CountResult result;
-  result.count = 1;
-  int c;
-  while ((c = fgetc(file)) == ch){
-    result.count += 1;
-  }
-  result.nextChar = c;
-  if (c == EOF){
-    ungetc(c, file);
-  }
-  return result;
-}
-
-
 
 
 void tokenizeMarkdown(const char* filename, struct TokenList* list){
@@ -108,14 +94,15 @@ char* getContent(FILE* file, char endChar, int duplicateEndChar){
     printf("Error while initializing content inside getContent");
     exit(4);
   }
-  int index = 0;
+  content[0] = pc;
+  int index = 1;
   while ((c = fgetc(file)) && c != EOF){
     if (!duplicateEndChar && endChar == c){
       content[index] = '\0';
       return content;
     }
     else if(duplicateEndChar && (endChar == c && c == pc)){
-      content[index] = '\0';
+      content[index - 1] = '\0';
       return content;
     }
     if (index == contCap){
@@ -128,4 +115,13 @@ char* getContent(FILE* file, char endChar, int duplicateEndChar){
   }
   content[index] = '\0';
   return content;
+}
+
+void printTokens(struct TokenList* list) {
+    for (size_t i = 0; i < list->size; ++i) {
+        printf("Token %zu:\n", i);
+        printf("  Type: %d\n", list->tokens[i].type);
+        printf("  Content: %s\n", list->tokens[i].content);
+        printf("  Quantity: %d\n", list->tokens[i].quantity);
+    }
 }

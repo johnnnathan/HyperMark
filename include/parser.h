@@ -25,16 +25,12 @@ struct TokenList{
   size_t capacity;
 };
 
-struct CountResult{
-  int count;
-  int nextChar;
-};
 
 void initializeTokenList(struct TokenList* list , size_t capacity);
 void addToken(struct TokenList* list, struct Token* token);
 void freeTokenList(struct TokenList* list);
 void tokenizeMarkdown(const char* filename, struct TokenList* list);
 enum Type detectType(const char* markdown);
-struct CountResult countConsecutiveChars(FILE* file, char ch);
 char* getContent(FILE* file, char endChar, int duplicateEndChar);
 enum Type getMDType(char c);
+void printTokens(struct TokenList* list);
