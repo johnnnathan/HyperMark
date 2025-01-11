@@ -1,6 +1,7 @@
 #include "../include/parser.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 void initializeTokenList(struct TokenList* list , size_t capacity){
@@ -27,9 +28,18 @@ void addToken(struct TokenList* list, struct Token* token){
   list->tokens[list->size++] = *token;
 }
 
-void freeTokenList(struct TokenList* list){
+
+void freeTokenList(struct TokenList* list) {
   free(list->tokens);
-  free(list);
+
+}
+
+
+int isSpecialType(char c){
+  if (c == '#' || c == '_' || c == '*'){
+    return 1;
+  }
+  return 0;
 }
 
 
@@ -39,34 +49,88 @@ void tokenizeMarkdown(const char* filename, struct TokenList* list){
     printf("Could not open file");
     exit(3);
   }
-  int c;
+  int c = fgetc(file);
+  int specialType = getMDType(c);
   int pc; // previous c
-  pc = fgetc(file);
-  while((c = fgetc(file)) != EOF){
-    // If duplicate character or # with newline before it, indicating Heading
-    if (c == pc || (c == '#' && pc == '\n')){
+  char textBuffer[1024];
+  int textLength = 0;
+  do {
+    if ((isSpecialType(c) && c == pc) || (c == '#')){
       char* string;
       int counter = 1;
+
+
+      if (textLength > 0){
+        textBuffer[textLength - 1] = '\0';
+        struct Token token = {0};
+        token.type = PLAIN_TEXT;
+        token.content = strdup(textBuffer);
+        token.quantity = 0; 
+        addToken(list, &token);
+        textLength = 0;
+      }
+
       switch (c) {
         case '#':
           while ((c = fgetc(file)) == '#'){
-            counter++; 
+            counter += 1; 
           }
+          specialType = HEADING;
           string = getContent(file, '\n', 0);
           break;
         case '*':
         case '_':
+          if (c == '*'){ specialType = BOLD;}
+          if (c == '_'){ specialType = ITALICS;}
           string = getContent(file, c, 1);
           counter = 0;
           break;
       }
-      struct Token token;
-      token.type = getMDType(c);
-      token.content = string;
+
+      struct Token token = {0};
+      token.type = specialType;
+      token.content = strdup(string);
       token.quantity = counter; 
       addToken(list, &token);
+      free(string);
     }
+    else {
+      if(textLength < 1023){
+        textBuffer[textLength++] = c;
+      }
+      else{
+        textBuffer[textLength] = '\0';
+
+        struct Token token;
+        token.type = PLAIN_TEXT;
+        token.content = strdup(textBuffer);
+        token.quantity = 0; 
+        addToken(list, &token);
+        textLength = 0;
+      }
+
+    }
+    pc = c;
+  }while((c = fgetc(file)) != EOF);
+  
+  if (textLength > 0){
+
+    textBuffer[textLength] = '\0';
+
+    struct Token token;
+    token.type = PLAIN_TEXT;
+    token.content = strdup(textBuffer);
+    token.quantity = 0; 
+    addToken(list, &token);
+    textLength = 0;
   }
+  if (file == NULL){
+    printf("ERROR: File not open");
+    exit(1);
+  }
+
+
+
 }
 
 enum Type getMDType(char c){
@@ -107,6 +171,11 @@ char* getContent(FILE* file, char endChar, int duplicateEndChar){
     }
     if (index == contCap){
       char* temp = realloc(content, contCap * 2);
+      if (temp == NULL){
+        free(content);
+        printf("Realloc failed");
+        exit(5);
+      }
       content = temp;
     }
     content[index] = c;
@@ -124,4 +193,41 @@ void printTokens(struct TokenList* list) {
         printf("  Content: %s\n", list->tokens[i].content);
         printf("  Quantity: %d\n", list->tokens[i].quantity);
     }
+}
+
+
+void toHTML(struct TokenList* list){
+  FILE* testFile = fopen("../output.html", "w");
+  if (!testFile) {
+      printf("Failed to create test file.\n");
+      exit(1);
+  }
+  for (int i = 0; i < list->size; i++){
+    struct Token token = list->tokens[i];
+    int type = token.type;
+    switch (type) {
+      case PLAIN_TEXT:
+        fprintf(testFile, "%s",  token.content);
+        break;
+      case HEADING:
+        fprintf(testFile, "<h%d>%s</h%d>", token.quantity , token.content, token.quantity);
+        break;
+      case BOLD:
+        fprintf(testFile, "<b>%s</b>",  token.content);
+        break;
+      case ITALICS:
+        fprintf(testFile, "<i>%s</i>",  token.content);
+        break;
+      case LINK:
+      case IMAGE:
+      case CODE_BLOCK:
+      case LIST:
+      case BLOCKQUOTE:
+      default:
+        break;
+    }
+
+
+  }
+  fclose(testFile);
 }

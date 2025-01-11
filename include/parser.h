@@ -34,3 +34,5 @@ enum Type detectType(const char* markdown);
 char* getContent(FILE* file, char endChar, int duplicateEndChar);
 enum Type getMDType(char c);
 void printTokens(struct TokenList* list);
+int isSpecialType(char c);
+void toHTML(struct TokenList* list);
