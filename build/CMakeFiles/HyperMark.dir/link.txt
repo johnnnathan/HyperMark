@@ -1,1 +1,0 @@
-/usr/bin/cc CMakeFiles/HyperMark.dir/src/main.c.o CMakeFiles/HyperMark.dir/src/parser.c.o -o HyperMark 

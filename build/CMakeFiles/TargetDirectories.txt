@@ -1,3 +1,0 @@
-/home/dimi/Desktop/Projects/HyperMark/build/CMakeFiles/HyperMark.dir
-/home/dimi/Desktop/Projects/HyperMark/build/CMakeFiles/edit_cache.dir
-/home/dimi/Desktop/Projects/HyperMark/build/CMakeFiles/rebuild_cache.dir
