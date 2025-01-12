@@ -1,11 +1,10 @@
+## Subheader 1
 
+### Subheader 1.1
 
-# Database Systems
+This is **bold text** and this is __italic text__. You can combine **bold** and __italic__ text like this: **bold and italic**.
 
-## Definition
+### Subheader 1.2
 
-**Database**: A collection of related data.
+This section contains more **bold** and __italic__ examples.
 
-**Database Management System (DBMS)**: Software that manages and controls access to the database.
-
-**Database Application**: A program that interacts with the database during its execution.

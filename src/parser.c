@@ -4,36 +4,48 @@
 #include <string.h>
 
 
+
 void initializeTokenList(struct TokenList* list , size_t capacity){
-  list->tokens = malloc(sizeof(struct Token) * capacity);
-  if (list->tokens == NULL){
-    printf("Error when initializing TokenList");
-    exit(1);
-  }
   list->size = 0;
   list->capacity = capacity;
+  list->tokens = (struct Token*)malloc(list->capacity * sizeof(struct Token));
+
+  if (list->tokens == NULL){
+    printf("Error while intitializing TokenList");
+    exit(1);
+  }
+  return;
 }
+
+void freeTokenList(struct TokenList* list){
+  printf("Cleaning up tokens...");
+  free(list->tokens);
+  return;
+}
+
+
+
 
 void addToken(struct TokenList* list, struct Token* token){
-  if (list->capacity == list->size){
+  if (list->size == list->capacity){
     size_t newCap = list->capacity * 2;
-    struct Token* temp = realloc(list->tokens, newCap);
-    if (temp == NULL){
-      printf("Error while resizing TokenList");
+    if (newCap < 1){
+      printf("TokenList capacity overflow, file is too big.");
       exit(2);
     }
-    list->tokens = temp;
+    list->tokens = (struct Token*)realloc(list->tokens,newCap * sizeof(struct Token));
+    if (list->tokens == NULL){
+      printf("Error when resizing TokenList inside addToken");
+      free(list->tokens);
+      exit(3);
+    }
     list->capacity = newCap;
   }
-  list->tokens[list->size++] = *token;
+  list->tokens[list->size] = *token;
+  list->size += 1;
+  return;
+  
 }
-
-
-void freeTokenList(struct TokenList* list) {
-  free(list->tokens);
-
-}
-
 
 int isSpecialType(char c){
   if (c == '#' || c == '_' || c == '*'){
@@ -42,16 +54,33 @@ int isSpecialType(char c){
   return 0;
 }
 
-
-void tokenizeMarkdown(const char* filename, struct TokenList* list){
-  FILE* file = fopen(filename, "r");
-  if (!file){
-    printf("Could not open file");
-    exit(3);
+enum Type getMDType(char c){
+  switch (c) {
+    case '#':
+      return HEADING;
+    case '*':
+      return BOLD;
+    case '_':
+      return ITALICS;
+    default:
+      return PLAIN_TEXT;
+  
   }
+}
+
+void printTokens(struct TokenList* list){
+  for (size_t i = 0; i < list->size; ++i) {
+      printf("Token %zu:\n", i);
+      printf("  Type: %d\n", list->tokens[i].type);
+      printf("  Content: %s\n", list->tokens[i].content);
+      printf("  Quantity: %d\n", list->tokens[i].quantity);
+  }
+}
+
+void tokenizeMarkdown(FILE* file, struct TokenList* list){
   int c = fgetc(file);
   int specialType = getMDType(c);
-  int pc; // previous c
+  int pc = -1; // previous c
   char textBuffer[1024];
   int textLength = 0;
   do {
@@ -64,7 +93,8 @@ void tokenizeMarkdown(const char* filename, struct TokenList* list){
         textBuffer[textLength - 1] = '\0';
         struct Token token = {0};
         token.type = PLAIN_TEXT;
-        token.content = strdup(textBuffer);
+        strncpy(token.content, textBuffer, sizeof(token.content) - 1);
+        token.content[token.capacity -1] = '\0';
         token.quantity = 0; 
         addToken(list, &token);
         textLength = 0;
@@ -86,10 +116,12 @@ void tokenizeMarkdown(const char* filename, struct TokenList* list){
           counter = 0;
           break;
       }
+      printf("%s\n", string);
 
       struct Token token = {0};
       token.type = specialType;
-      token.content = strdup(string);
+      strncpy(token.content, string, sizeof(token.content) - 1);
+      token.content[token.capacity - 1] = '\0';
       token.quantity = counter; 
       addToken(list, &token);
       free(string);
@@ -103,8 +135,9 @@ void tokenizeMarkdown(const char* filename, struct TokenList* list){
 
         struct Token token;
         token.type = PLAIN_TEXT;
-        token.content = strdup(textBuffer);
         token.quantity = 0; 
+        strncpy(token.content, textBuffer, sizeof(token.content) - 1);
+        token.content[token.capacity-1] = '\0';
         addToken(list, &token);
         textLength = 0;
       }
@@ -119,34 +152,13 @@ void tokenizeMarkdown(const char* filename, struct TokenList* list){
 
     struct Token token;
     token.type = PLAIN_TEXT;
-    token.content = strdup(textBuffer);
+    strncpy(token.content, textBuffer, sizeof(token.content) - 1);
+    token.content[token.capacity -1] = '\0';
     token.quantity = 0; 
     addToken(list, &token);
     textLength = 0;
   }
-  if (file == NULL){
-    printf("ERROR: File not open");
-    exit(1);
-  }
-
-
-
 }
-
-enum Type getMDType(char c){
-  switch (c) {
-    case '#':
-      return HEADING;
-    case '*':
-      return BOLD;
-    case '_':
-      return ITALICS;
-    default:
-      return PLAIN_TEXT;
-  
-  }
-}
-
 char* getContent(FILE* file, char endChar, int duplicateEndChar){
   int pc = fgetc(file);
   int c;
@@ -185,20 +197,9 @@ char* getContent(FILE* file, char endChar, int duplicateEndChar){
   content[index] = '\0';
   return content;
 }
-
-void printTokens(struct TokenList* list) {
-    for (size_t i = 0; i < list->size; ++i) {
-        printf("Token %zu:\n", i);
-        printf("  Type: %d\n", list->tokens[i].type);
-        printf("  Content: %s\n", list->tokens[i].content);
-        printf("  Quantity: %d\n", list->tokens[i].quantity);
-    }
-}
-
-
 void toHTML(struct TokenList* list){
-  FILE* testFile = fopen("../output.html", "w");
-  if (!testFile) {
+  FILE* testFile = fopen("output.html", "w");
+  if (testFile == NULL){
       printf("Failed to create test file.\n");
       exit(1);
   }

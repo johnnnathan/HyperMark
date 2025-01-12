@@ -15,7 +15,9 @@ enum Type {
 
 struct Token {
   enum Type type;  
-  char* content;
+  char content[128];
+  int size;
+  int capacity;
   int quantity;
 };
 
@@ -29,7 +31,7 @@ struct TokenList{
 void initializeTokenList(struct TokenList* list , size_t capacity);
 void addToken(struct TokenList* list, struct Token* token);
 void freeTokenList(struct TokenList* list);
-void tokenizeMarkdown(const char* filename, struct TokenList* list);
+void tokenizeMarkdown(FILE* file, struct TokenList* list);
 enum Type detectType(const char* markdown);
 char* getContent(FILE* file, char endChar, int duplicateEndChar);
 enum Type getMDType(char c);
