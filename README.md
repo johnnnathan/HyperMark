@@ -31,6 +31,7 @@ Make sure you have CMake and a C compiler (like `gcc`) installed on your machine
 3. Run the following command to generate the build files:
 
    ```bash
+   mkdir build
    cd build
    cmake ..
    make
