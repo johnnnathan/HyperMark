@@ -18,7 +18,6 @@ void initializeTokenList(struct TokenList* list , size_t capacity){
 }
 
 void freeTokenList(struct TokenList* list){
-  printf("Cleaning up tokens...");
   free(list->tokens);
   return;
 }
@@ -116,7 +115,6 @@ void tokenizeMarkdown(FILE* file, struct TokenList* list){
           counter = 0;
           break;
       }
-      printf("%s\n", string);
 
       struct Token token = {0};
       token.type = specialType;
