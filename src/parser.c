@@ -79,11 +79,12 @@ void printTokens(struct TokenList* list){
 void tokenizeMarkdown(FILE* file, struct TokenList* list){
   int c = fgetc(file);
   int specialType = getMDType(c);
-  int pc = -1; // previous c
+  int pc = ' '; // previous c
   char textBuffer[1024];
   int textLength = 0;
+  int acceptFlag = 1;
   do {
-    if ((isSpecialType(c) && c == pc) || (c == '#')){
+    if ((isSpecialType(c) && (c == pc || pc == ' ')) || (c == '#')){
       char* string;
       int counter = 1;
 
@@ -108,21 +109,32 @@ void tokenizeMarkdown(FILE* file, struct TokenList* list){
           string = getContent(file, '\n', 0);
           break;
         case '*':
+          if (pc != ' '){
+            specialType = BOLD;
+            string = getContent(file, c, 1);
+            counter = 0;
+            break;
+          }
+          acceptFlag = 0;
+          break;
         case '_':
-          if (c == '*'){ specialType = BOLD;}
-          if (c == '_'){ specialType = ITALICS;}
-          string = getContent(file, c, 1);
+          specialType = ITALICS;
+          string = getContent(file, c, 0);
           counter = 0;
           break;
       }
 
-      struct Token token = {0};
-      token.type = specialType;
-      strncpy(token.content, string, sizeof(token.content) - 1);
-      token.content[token.capacity - 1] = '\0';
-      token.quantity = counter; 
-      addToken(list, &token);
-      free(string);
+      if (acceptFlag != 0){
+        struct Token token = {0};
+        token.type = specialType;
+        strncpy(token.content, string, sizeof(token.content) - 1);
+        token.content[token.capacity - 1] = '\0';
+        token.quantity = counter; 
+        addToken(list, &token);
+        free(string);
+
+      }
+      acceptFlag = 1;
     }
     else {
       if(textLength < 1023){
@@ -210,6 +222,9 @@ void toHTML(struct TokenList* list){
         break;
       case HEADING:
         fprintf(testFile, "<h%d>%s</h%d>", token.quantity , token.content, token.quantity);
+        if (i + 1 < list->size && list->tokens[i+1].type != HEADING){
+          fprintf(testFile, "<p>");
+        }
         break;
       case BOLD:
         fprintf(testFile, "<b>%s</b>",  token.content);
@@ -224,6 +239,9 @@ void toHTML(struct TokenList* list){
       case BLOCKQUOTE:
       default:
         break;
+    }
+    if (i + 1 == list->size || list->tokens[i + 1].type == HEADING){
+      fprintf(testFile, "</p>");
     }
 
 
