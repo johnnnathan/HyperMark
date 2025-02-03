@@ -84,19 +84,21 @@ void tokenizeMarkdown(FILE* file, struct TokenList* list){
   int textLength = 0;
   int acceptFlag = 1;
   do {
-    if ((isSpecialType(c) && (c == pc || pc == ' ')) || (c == '#')){
+    if ((isSpecialType(c) && (c == pc || pc == ' ')) || (c == '#') || (pc == '-' && c == ' ')){
       char* string;
       int counter = 1;
 
 
       if (textLength > 0){
         textBuffer[textLength - 1] = '\0';
-        struct Token token = {0};
-        token.type = PLAIN_TEXT;
-        strncpy(token.content, textBuffer, sizeof(token.content) - 1);
-        token.content[token.capacity -1] = '\0';
-        token.quantity = 0; 
-        addToken(list, &token);
+        if (strlen(textBuffer) != 0){
+          struct Token token = {0};
+          token.type = PLAIN_TEXT;
+          strncpy(token.content, textBuffer, sizeof(token.content) - 1);
+          token.content[token.capacity -1] = '\0';
+          token.quantity = 0; 
+          addToken(list, &token);
+        }
         textLength = 0;
       }
 
@@ -124,7 +126,13 @@ void tokenizeMarkdown(FILE* file, struct TokenList* list){
           break;
       }
 
-      if (acceptFlag != 0){
+      if (pc == '-'){
+        specialType = LIST;
+        string = getContent(file, '\n',0);
+        counter = 0;
+      }
+
+      if (acceptFlag != 0 ){
         struct Token token = {0};
         token.type = specialType;
         strncpy(token.content, string, sizeof(token.content) - 1);
@@ -142,7 +150,6 @@ void tokenizeMarkdown(FILE* file, struct TokenList* list){
       }
       else{
         textBuffer[textLength] = '\0';
-
         struct Token token;
         token.type = PLAIN_TEXT;
         token.quantity = 0; 
@@ -234,20 +241,31 @@ void toHTML(struct TokenList* list){
         fprintf(testFile, "<i>%s</i>",  token.content);
         break;
       case LINK:
+        
       case IMAGE:
       case CODE_BLOCK:
       case LIST:
+        if ((i - 1 >= 0 && list->tokens[i-1].type != LIST) || (i == 0)){
+          fprintf(testFile, "<ul>\n");
+        }
+        fprintf(testFile, "\t<li>%s</li>\n",  token.content);
+        if (i + 1 < list->size && list->tokens[i+1].type != LIST){
+          fprintf(testFile, "</ul>\n");
+        }
+        break;
+
       case BLOCKQUOTE:
       default:
         break;
     }
     if (i + 1 == list->size || list->tokens[i + 1].type == HEADING){
-      fprintf(testFile, "</p>");
+      fprintf(testFile, "</p>\n");
     }
 
 
   }
 
   fprintf(testFile, "\n</body>\n</html>");
+  printTokens(list);
   fclose(testFile);
 }
