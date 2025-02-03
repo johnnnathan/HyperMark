@@ -213,6 +213,7 @@ void toHTML(struct TokenList* list){
       printf("Failed to create test file.\n");
       exit(1);
   }
+  fprintf(testFile, "<!DOCTYPE html>\n<html>\n<body>");
   for (int i = 0; i < list->size; i++){
     struct Token token = list->tokens[i];
     int type = token.type;
@@ -246,5 +247,7 @@ void toHTML(struct TokenList* list){
 
 
   }
+
+  fprintf(testFile, "\n</body>\n</html>");
   fclose(testFile);
 }
