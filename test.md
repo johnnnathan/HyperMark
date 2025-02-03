@@ -1,17 +1,15 @@
-## Subheader 1
+# Main Heading
 
-### Subheader 1.1
+## Subheading
 
-This is **bold text** and this is _italic text_. You can combine **bold** and _italic_ text like this: **bold and italic**.
+### Smaller Subheading
 
-### Subheader 1.2
-
-This section contains more **bold** and _italic_ examples.
+This is a paragraph with **bold text** and _italic text_.
 
 
-- something
-- something2
-- something3
+## Unordered List
 
-Abcajsdlasjdlasjd
+- Item 1
+- Item 2
+- Item 3
 

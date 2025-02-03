@@ -235,10 +235,10 @@ void toHTML(struct TokenList* list){
         }
         break;
       case BOLD:
-        fprintf(testFile, "<b>%s</b>",  token.content);
+        fprintf(testFile, " <b>%s</b>",  token.content);
         break;
       case ITALICS:
-        fprintf(testFile, "<i>%s</i>",  token.content);
+        fprintf(testFile, " <i>%s</i>",  token.content);
         break;
       case LINK:
         
@@ -266,6 +266,5 @@ void toHTML(struct TokenList* list){
   }
 
   fprintf(testFile, "\n</body>\n</html>");
-  printTokens(list);
   fclose(testFile);
 }
