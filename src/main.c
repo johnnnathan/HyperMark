@@ -3,7 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-  const char* testMD = "test.md";
+  const char* testMD = "input.md";
   FILE* file = fopen(testMD, "r");
   if (file == NULL){
     printf("Error opening file");
